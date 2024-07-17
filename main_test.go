@@ -6,7 +6,11 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
+
+	"github.com/Sorrow446/go-mp4tag"
+	"github.com/unitnotes/audiotag"
 )
 
 func TestParseM4B(t *testing.T) {
@@ -50,8 +54,12 @@ func TestParseM4B(t *testing.T) {
 	fmt.Printf("Duration: %d\n", audioTetadata.Duration())
 
 	fmt.Printf("Chapter list: %v\n", rawMetaData["chpl"])
-	fmt.Printf("Chapter list: %v\n", rawMetaData)
 
+}
+
+type Text struct {
+	Description string
+	Content     string
 }
 
 func TestParseMP3(t *testing.T) {
@@ -64,7 +72,7 @@ func TestParseMP3(t *testing.T) {
 
 	var rawMetaData map[string]interface{} = audioTetadata.Raw()
 
-	// fmt.Printf("Title: %s\n", audioTetadata.Title())
+	fmt.Printf("Title: %s\n", audioTetadata.Title())
 	// publisher, series, series sequence, isbn
 
 	fmt.Printf("Author: %v\n", audioTetadata.Composer()+audioTetadata.AlbumArtist())
@@ -74,12 +82,24 @@ func TestParseMP3(t *testing.T) {
 	fmt.Printf("Published Year: %d\n", audioTetadata.Year())
 	fmt.Printf("Narrator(s): %v\n", audioTetadata.Composer())
 	fmt.Printf("Genre: %v\n", audioTetadata.Genre())
-	fmt.Printf("Series: %v\n", rawMetaData["TXXX_4"])
-	fmt.Printf("Series Sequence: %v\n", rawMetaData["TXXX_5"])
-	fmt.Printf("Language: %v\n", rawMetaData["TXXX_3"])
 	fmt.Printf("ISBN: %v\n", rawMetaData["ISBN"])
-	fmt.Printf("ASIN: %v\n", rawMetaData["TXXX_0"])
 	fmt.Printf("Cover: %v\n", rawMetaData["APIC"])
+
+	// Print the map
+	for _, value := range rawMetaData {
+		if reflect.TypeOf(value).String() == "*audiotag.Comm" {
+			switch value.(*audiotag.Comm).Description {
+			case "LANGUAGE":
+				fmt.Printf("Language: %v\n", value.(*audiotag.Comm).Text)
+			case "SERIES":
+				fmt.Printf("SERIES: %v\n", value.(*audiotag.Comm).Text)
+			case "AUDIBLE_ASIN":
+				fmt.Printf("ASIN: %v\n", value.(*audiotag.Comm).Text)
+			default:
+
+			}
+		}
+	}
 
 	f, _ := os.Open(filePath)
 	fi, _ := f.Stat()
@@ -92,11 +112,36 @@ func TestParseMP3(t *testing.T) {
 	// Print the file extension
 	fmt.Println("File extension:", ext)
 
-	fmt.Printf("Duration: %d\n", rawMetaData["TLEN"])
+	fmt.Printf("Duration: %d\n", audioTetadata.Duration())
 
-	fmt.Printf("Chapter list: %v\n", rawMetaData["chpl"])
-	fmt.Printf("Chapter list: %v\n", rawMetaData)
+}
 
+func TestWriteM4b(t *testing.T) {
+	mp4, err := mp4tag.Open("Eldest - Christopher Paolini.m4b")
+	if err != nil {
+		panic(err)
+	}
+	defer mp4.Close()
+
+	writeTags := &mp4tag.MP4Tags{
+		Custom: map[string]string{
+			"Subtitle":    "Golang Tutorial",
+			"LANGUAGE":    "English",
+			"ISBN":        "English",
+			"ASIN":        "English",
+			"\xa9mvn":     "My Series",
+			"series-part": "Seris-Part",
+		},
+		Copyright: "@Golang LLC",
+		Year:      2024,
+		Genre:     mp4tag.GenreAcidJazz,
+		Composer:  "Golanger",
+	}
+
+	err = mp4.Write(writeTags, []string{})
+	if err != nil {
+		panic(err)
+	}
 }
 
 func Float32ToBytes(f float32) []byte {

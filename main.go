@@ -7,12 +7,24 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/Sorrow446/go-mp4tag"
 	"github.com/unitnotes/audiotag"
 )
 
 func main() {
 
 	filePath := flag.String("file", "", "path to the file")
+	title := flag.String("title", "", "title")
+	publisher := flag.String("copyright", "", "copyright")
+	year := flag.Int("year", 0, "year")
+	narrator := flag.String("narrator", "", "narrator")
+	genre := flag.Uint("genre", 0, "genre")
+	subtitle := flag.String("sub", "", "subtitle")
+	language := flag.String("lang", "", "language")
+	isbn := flag.String("isbn", "", "isbn")
+	asin := flag.String("asin", "", "asin")
+	mvn := flag.String("mvn", "", "mvn")
+	seriesPart := flag.String("series-part", "", "seris-part")
 	flag.Parse()
 
 	if *filePath == "" {
@@ -67,5 +79,72 @@ func main() {
 		}
 		fmt.Println(chapter)
 	}
+	f.Close()
+
+	mp4, err := mp4tag.Open(*filePath)
+	if err != nil {
+		panic(err)
+	}
+	defer mp4.Close()
+
+	writeTags := &mp4tag.MP4Tags{}
+
+	// Custom: map[string]string{
+	// 	"Subtitle":    "Golang Tutorial",
+	// 	"LANGUAGE":    "English",
+	// 	"ISBN":        "English",
+	// 	"ASIN":        "English",
+	// 	"\xa9mvn":     "My Series",
+	// 	"series-part": "Seris-Part",
+	// },
+
+	if *title != "" {
+		writeTags.Title = *title
+	}
+
+	if *publisher != "" {
+		writeTags.Copyright = *publisher
+	}
+
+	if *year != 0 {
+		writeTags.Year = int32(*year)
+	}
+
+	if *genre != 0 {
+		writeTags.Genre = mp4tag.Genre(*genre)
+	}
+
+	if *narrator != "" {
+		writeTags.Composer = *narrator
+	}
+
+	if *subtitle != "" {
+		writeTags.Custom["Subtitle"] = *subtitle
+	}
+
+	if *language != "" {
+		writeTags.Custom["LANGUAGE"] = *language
+	}
+
+	if *isbn != "" {
+		writeTags.Custom["ISBN"] = *isbn
+	}
+
+	if *asin != "" {
+		writeTags.Custom["ASIN"] = *asin
+	}
+	if *mvn != "" {
+		writeTags.Custom["\xa9mvn"] = *mvn
+	}
+
+	if *seriesPart != "" {
+		writeTags.Custom["series-part"] = *seriesPart
+	}
+
+	err = mp4.Write(writeTags, []string{})
+	if err != nil {
+		panic(err)
+	}
+
 	// fmt.Printf("Raw Data: %v\n", rawMetaData)
 }
