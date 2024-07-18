@@ -7,8 +7,9 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/Sorrow446/go-mp4tag"
-	"github.com/unitnotes/audiotag"
+	"main/go-mp4tag"
+
+	"main/audiotag"
 )
 
 func main() {
@@ -117,6 +118,8 @@ func main() {
 	if *narrator != "" {
 		writeTags.Composer = *narrator
 	}
+
+	writeTags.Custom = make(map[string]string)
 
 	if *subtitle != "" {
 		writeTags.Custom["Subtitle"] = *subtitle

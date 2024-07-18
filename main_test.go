@@ -9,8 +9,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Sorrow446/go-mp4tag"
-	"github.com/unitnotes/audiotag"
+	"main/go-mp4tag"
+
+	"main/audiotag"
 )
 
 func TestParseM4B(t *testing.T) {

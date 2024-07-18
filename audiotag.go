@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/unitnotes/audiotag"
+	"main/audiotag"
 )
 
 func parseAudioTag(filePath string) (audiotag.Metadata, error) {
