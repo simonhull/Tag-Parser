@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -491,44 +492,53 @@ func (m *metadataMP4) Duration() int {
 // Chapter represents a chapter with start time, end time, and title.
 type Chapter struct {
 	id        uint8
-	StartTime string
-	EndTime   string
+	StartTime int64
+	EndTime   int64
 	Title     string
 }
 
-// parseChapters parses chapter marker data from a byte slice.
 func parseChapters(data []byte) ([]Chapter, error) {
-
 	var chapters []Chapter
 
-	// Split the string by null character and filter out empty entries
 	separator := []byte{0, 0, 0}
 	sections := bytes.Split(data, separator)
 
 	for index, section := range sections {
-		if len(section) < 2 {
-			continue
+		if len(section) < 6 {
+			continue // Skip sections that are too short to contain valid data
 		}
 
-		startTime := binary.BigEndian.Uint32(section[0:4])
-		title := string(section[6:])
-		result := float64(startTime) * 256 / 10000000
-		rounded := fmt.Sprintf("%.3f", result)
+		var startTimeFloat float64
+		var title string
 
-		if index > 0 {
-			chapters[index-1].EndTime = rounded
-		} else {
-			startTime = 0
+		if index == 0 {
+			startTimeFloat = 0
 			title = string(section)
-			rounded = "0.000"
+		} else {
+			startTime := binary.BigEndian.Uint32(section[0:4])
+			startTimeFloat = float64(startTime) * 256 / 10000000
+			title = string(section[6:])
 		}
 
-		chapters = append(chapters, Chapter{
-			id:        uint8(index),
-			StartTime: rounded,
-			EndTime:   "",
+		startTimeSeconds := int64(math.Round(startTimeFloat))
+
+		chapter := Chapter{
 			Title:     title,
-		})
+			StartTime: startTimeSeconds,
+			EndTime:   0, // We'll set this later
+		}
+
+		// Set the EndTime of the previous chapter
+		if index > 0 && len(chapters) > 0 {
+			chapters[len(chapters)-1].EndTime = startTimeSeconds
+		}
+
+		chapters = append(chapters, chapter)
+	}
+
+	// Set the EndTime of the last chapter to 0 (or you might want to set it to the total duration if available)
+	if len(chapters) > 0 {
+		chapters[len(chapters)-1].EndTime = 0
 	}
 
 	return chapters, nil
