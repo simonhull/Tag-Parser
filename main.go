@@ -11,7 +11,7 @@ import (
 	"strconv"
 )
 
-func parseAudioTag(filePath string) (audiotag.Metadata, error) {
+func ParseAudioTag(filePath string) (audiotag.Metadata, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		fmt.Println("Parse Error:", err.Error())
@@ -46,7 +46,7 @@ func main() {
 		return
 	}
 
-	audioTetadata, err := parseAudioTag(*filePath)
+	audioTetadata, err := ParseAudioTag(*filePath)
 	if err != nil {
 		return
 	}
